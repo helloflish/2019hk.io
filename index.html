@@ -143,9 +143,9 @@
                  padding:7px 14px;cursor:pointer;letter-spacing:.08em;flex:1}
   #cxTabs button:hover{background:#18202a;color:var(--ink)}
   #cxTabs button.on{background:#18202a;color:var(--prot)}
-  #cxClose{background:none;border:1px solid var(--line);color:var(--dim);font-family:inherit;
+  #cxClose,#tutClose{background:none;border:1px solid var(--line);color:var(--dim);font-family:inherit;
            font-size:13px;padding:5px 12px;cursor:pointer;line-height:1}
-  #cxClose:hover{color:var(--ink);border-color:var(--dim)}
+  #cxClose:hover,#tutClose:hover{color:var(--ink);border-color:var(--dim)}
   #cxNote{padding:9px 16px;border-bottom:1px solid var(--line);font-size:12px;color:var(--dim)}
   #cxNote b{color:var(--prot);font-weight:600}
   .cx-main{flex:1;display:flex;min-height:0;min-width:0}
@@ -250,7 +250,7 @@
 
 <div id="tut">
   <div class="cx-win">
-    <header><b id="tutTtl">教學</b><span style="flex:1"></span><button id="tutClose">✕</button></header>
+    <header><b id="tutTtl">教學</b><span style="flex:1;min-height:30px"></span><button id="tutClose">✕</button></header>
     <div class="cx-main"><nav id="tutList"></nav><section id="tutDetail"></section></div>
   </div>
 </div>
@@ -301,9 +301,9 @@ const CFG = {
   HP: 100,
   RESPAWN: 10, POL_RESPAWN: 10, INVULN: 5,
   POLICE_N: { shield:6, gunner:6 },
-  // 抗爭者每兵種 4 人 = 20 人；警察 6+6 = 12 人。
-  PROT_N:   { archer:3, mage:3, slinger:3, infantry:3, engineer:3 },   // 大學佔領圖 15 人
-  PROT_N_DM:{ archer:4, mage:4, slinger:4, infantry:4, engineer:4 },
+  // 警察基準 6+6 = 12 人（中大、尖沙咀）；理大、添馬以圖級 polN 覆蓋為 5+5 = 10 人。
+  PROT_N:   { archer:3, mage:3, slinger:3, infantry:3, engineer:3 },   // 抗爭者佔領圖各 3 人 = 15 人（中大、理大、添馬）
+  PROT_N_DM:{ archer:4, mage:4, slinger:4, infantry:4, engineer:4 },   // 純擊倒戰（尖沙咀）各 4 人 = 20 人
 
   GEAR: {                      // 防禦／耐久池
     helmet:100, bigShield:100, roadSign:80, woodShield:50, umbrella:50, vest:100,
@@ -410,11 +410,11 @@ const MAPS = {
   cuhk: {
     zh:'中大戰役', w:2400, h:1800, mpp:0.40, north:0,
     place:'沙田 · 馬料水',
-    brief:'警方由大學站、二號橋沿大學道向上推進；抗爭者防守下校園夏鼎基運動場。運動場內朝二號橋一側有一道現成防線——磚陣與燃燒的雜物，拆不掉，只有裝甲車輾得過去。',
+    brief:'警方由大學站、二號橋沿大學道向上推進；抗爭者防守下校園夏鼎基運動場。',
     attacker:'pol',
     win:{ pol:'累計佔領夏鼎基運動場 30 秒', prot:'堅守 10 分鐘' }, capHold:30,
-    egg:'真人玩家（警察）可攻擊拆毀大學站廣場的民主女神像',
-    forts:[ {kind:'brick',x:1496,y:1006}, {kind:'fire',x:1517,y:1024} ]   /* 面對二號橋：磚陣×1＋燃燒的雜物×1 */,   // 運動場內、朝二號橋一側嘅現成防線
+    egg:'真人玩家（警察）可攻擊拆毀大學站廣場的民主女神像；抗爭者工兵可於運動場按 V 插上「光復香港 時代革命」旗（不影響戰局）',
+    /* 運動場現成防線（永久磚陣＋燃燒的雜物）已移除 */
     spawn:{ pol:{x:2190,y:270}, prot:{x:830,y:820} },   // 警方出生點推遠至大學站以北，離運動場越遠越好
     roads:[
       road(2250,0,150,1800,'吐露港公路'), road(2150,0,86,1800,'東鐵綫'),
@@ -450,7 +450,8 @@ const MAPS = {
       {kind:'police',x:2250,y:430,ang:1.57},{kind:'police',x:2250,y:560,ang:1.57},
       {kind:'armour',x:2110,y:640,ang:1.57}
     ],
-    props:[{type:'statue',x:1960,y:470,hp:400,zh:'民主女神像'}]
+    props:[{type:'statue',x:1960,y:470,hp:400,zh:'民主女神像'},
+           {type:'flagspot',x:1450,y:1000,hp:9999,zh:'光復香港 時代革命旗'}]   // 純裝飾：唔阻擋、唔可攻擊、不影響戰局
   },
 
   /* ------------------------------------------------------------------
@@ -459,6 +460,7 @@ const MAPS = {
      ------------------------------------------------------------------ */
   polyu: {
     zh:'理大戰役', w:1900, h:1500, mpp:0.22, north:0,
+    polN:{ shield:5, gunner:5 },   // 理大：警方 5 盾＋5 槍＝10 人（攻）；抗爭者用基準各 3 人＝15 人（守）
     place:'紅磡 · 理工大學',
     brief:'警方由尖東沿漆咸道南、科學館道推進，暢運道遭天橋封鎖；抗爭者防守中央平台。西面是歷史博物館與科學館，東面紅磡站。',
     attacker:'pol',
@@ -508,6 +510,7 @@ const MAPS = {
      ------------------------------------------------------------------ */
   tamar: {
     zh:'添馬戰役', w:2000, h:1500, mpp:0.30, north:0,
+    polN:{ shield:5, gunner:5 },   // 添馬：警方 5 盾＋5 槍＝10 人（守）；抗爭者用基準各 3 人＝15 人（攻）
     place:'金鐘 · 添馬',
     brief:'抗爭者由添美道、夏愨道方向衝擊立法會綜合大樓；警方防守議事廳。',
     attacker:'prot',
@@ -558,7 +561,7 @@ const MAPS = {
     brief:'沿彌敦道南北推進，利用橫街迂迴。沒有佔領點，純粹比拼擊倒人數。',
     attacker:null,
     win:{ prot:'擊倒 200 名警察', pol:'擊倒 200 名抗爭者' },
-    egg:'工兵以樽裝水清洗清真寺門口的藍色水劑（按 V）',
+    egg:'真人玩家工兵以樽裝水清洗清真寺門口的藍色水劑（按 V）',
     kills:{ prot:200, pol:200 },
     spawn:{ prot:{x:1270,y:240}, pol:{x:1400,y:1525} },
     roads:[
@@ -1467,7 +1470,7 @@ function interact(u){
     }
   }
   const own = ROLE[u.role].build;
-  if(u.side==='pol'){                           // 警察：4 秒拆除磚陣或燃燒的雜物
+  if(u.side==='pol'){                           // 警察：2.5 秒拆除磚陣、燃燒的雜物或垃圾桶（見 startJob clearBarr）
     const nb=G.barr.find(b=>!b.fort&&(b.kind==='brick'||b.kind==='fire'||b.kind==='bin')&&dist(b,u)<b.r+36);
     if(nb){ startJob(u,'clearBarr',u.x,u.y,nb); return; }
   }
@@ -1498,6 +1501,8 @@ function doEgg(u){
     if(dist(p,u)>70) continue;
     if(p.type==='podium'&&u.side==='prot'&&!G.eggs.flag){
       G.eggs.flag=true; say('<b>彩蛋：</b>已在議事廳噴上「沒有暴徒 只有暴政」，主席台已蓋上英國國旗'); return; }
+    if(p.type==='flagspot'&&u.side==='prot'&&!G.eggs.hkflag){
+      G.eggs.hkflag=true; say('<b>彩蛋：</b>已在運動場插上「光復香港 時代革命」旗幟（不影響戰局）'); return; }
     if(p.type==='mosque'&&u.side==='prot'&&!G.eggs.mosque){
       if((u.water||0)<=0){ say('需要樽裝水才能清洗'); return; }
       u.water--; G.eggs.mosque=true;
@@ -2293,7 +2298,7 @@ TR_PAIRS=[
 ['AI 工兵一走近催淚煙會自動蓋上雪糕筒；<b>你的工兵則按 C 手動撲滅最近一枚</b>（範圍 150）。滅完的雪糕筒會留在地上 5 秒才消失，走過便知道此處剛落過彈。','AI engineers cap tear gas with a cone automatically as they near it; <b>your engineer snuffs the nearest round by pressing C</b> (range 150). Spent cones linger 5 s so you can read where rounds just landed.'],
 ['撞擊傷害＝車速 × ','Ram damage = speed × '],
 ['，只會撞傷敵方——司機同陣營的人不會被自己人輾過。與建築物或路障碰撞不會令載具受損，但<b>載具與載具相撞雙方皆會受損</b>（傷害隨車速）。',". Only enemies get hit — the driver's own side is never run over. Hitting buildings or barricades doesn't hurt the vehicle, but <b>vehicle-on-vehicle collisions damage both</b> (scaling with speed)."],
-['輾磚陣同樣按車速磨損對方、自身每次承受車速 ×1.25 的傷害；運動場的現成防線只有它輾得過。司機可以是持盾警察，但車頂探頭位必須由持槍防暴警察擔任，滿員才會開動。車頂可探身開槍（居高臨下，射程 +10%），攻擊打在車上只會損耗車體；車輛被毀時全員陣亡。其他載具的乘員一律無法向外攻擊。警察玩家一登上裝甲車，最近的 AI 持槍警便會趕來補上車頂位，其他 AI 不會與玩家爭車。','Crushing brick lines wears them by speed while the hull takes speed ×1.25 per hit; only this vehicle can crush the sports-field fortifications. The driver may be a shield officer, but the roof hatch must be a riot gunner — it only moves fully crewed. The roof seat fires over the top (+10% range from height); hits on the vehicle only drain the hull. If it is destroyed, everyone inside dies. Occupants of all other vehicles cannot attack outward. The moment a police player boards, the nearest AI riot gunner runs over to man the roof — no other AI will compete for the vehicle.'],
+['輾磚陣同樣按車速磨損對方、自身每次承受車速 ×1.25 的傷害；理大的現成防線只有它輾得過。司機可以是持盾警察，但車頂探頭位必須由持槍防暴警察擔任，滿員才會開動。車頂可探身開槍（居高臨下，射程 +10%），攻擊打在車上只會損耗車體；車輛被毀時全員陣亡。其他載具的乘員一律無法向外攻擊。警察玩家一登上裝甲車，最近的 AI 持槍警便會趕來補上車頂位，其他 AI 不會與玩家爭車。','Crushing brick lines wears them by speed while the hull takes speed ×1.25 per hit; only this vehicle can crush the ready-made PolyU line. The driver may be a shield officer, but the roof hatch must be a riot gunner — it only moves fully crewed. The roof seat fires over the top (+10% range from height); hits on the vehicle only drain the hull. If it is destroyed, everyone inside dies. Occupants of all other vehicles cannot attack outward. The moment a police player boards, the nearest AI riot gunner runs over to man the roof — no other AI will compete for the vehicle.'],
 ['撞磚陣會按車速把它磨損，車身每次碰撞承受車速 ×1.25 的損傷。AI 司機一人即可開車衝擊敵人；沒有目標時會駛向佔領點，到達點邊全員下車加入戰鬥。','Ramming a brick line wears it by speed; the hull takes speed ×1.25 per hit. One AI driver is enough to charge — with no target it drives to the capture point and the crew piles out at the edge.'],
 [' 的士與警車任何一方皆可登上；<b>裝甲車只限警方使用</b>。AI 只會順路登上非常接近的空車，也不會登上其他 AI 正在駕駛的的士或警車。車輛被毀後化為永久路障。',' Taxis and patrol cars can be boarded by either side; <b>the armoured vehicle is police-only</b>. AI only hops into empty vehicles right beside them, and never joins a taxi or patrol car another AI is driving. Destroyed vehicles become permanent wreckage.'],
 ['踏入者每秒承受 ','Anyone standing in it takes '],
@@ -2311,8 +2316,6 @@ TR_PAIRS=[
 ['單發 17 傷害、每 0.5 秒一發，單人 34 DPS。<em>優勢在人數與射速</em>：每多一名彈叉手齊射便多 34 DPS。保持距離消磨對方的盾，切勿貿然衝前。','17 damage every 0.5 s — 34 DPS alone. <em>The edge is numbers and rate</em>: every extra slinger in the volley adds 34 DPS. Grind shields from range; never rush in.'],
 ['彈藥無限，射之不竭，連裝填都省了。單人 ','Unlimited ammo — no reloads, no magazines. Solo '],
 [' DPS，勝在人多齊射壓制。',' DPS; the strength is massed volleys.'],
-['舉著禁止駛入牌施工的人。士巴拿近戰半徑 34、單下 35 傷害，連揮 4 下便耗盡體力，正職是工程：<em>按 1/2/3 選擇建造物，按 E 施工，按 C 撲滅催淚彈，按 V 噴漆或用樽裝水清洗</em>。每人可同時維持 3 座磚陣、2 堆燃燒的雜物、1 個垃圾桶。','The one doing roadworks behind a no-entry sign. Wrench reach 34 at 35 damage a swing, four swings to empty stamina — but the real job is engineering: <em>1/2/3 picks a buildable, E builds, C snuffs gas, V sprays or washes</em>. Each engineer maintains up to 3 brick lines, 2 burning debris piles and 1 bin at once.'],
-['警棍單發 25 傷害，揮出去招呼的是身邊最近那一位。方盾加豬嘴（耐久 400）令他<em>站在己方催淚煙中亦安然無恙</em>——這是警方推進的核心。移動最慢，職責是頂在最前方吸收磚石；但步兵木棍的 51 比你的 34 長，近身交戰並不划算。','Baton hits for 25, always at whoever is nearest. Tower shield plus police gas mask (400 durability) means he <em>stands unharmed in his own gas</em> — the core of every police push. Slowest mover; the job is soaking bricks at the front. Beware: the infantry stick at 51 beats your 34 — trading blows up close is a bad deal.'],
 /* —— 武器/裝備 tips 片段 —— */
 ['彈匣 ','Magazine '],
 [' 發，清空後自動裝填 ',' rounds; auto-reloads in '],
@@ -2376,12 +2379,13 @@ TR_PAIRS=[
 ['守住立法會 10 分鐘','hold LegCo for 10 minutes'],
 ['累計佔領夏鼎基運動場 30 秒','hold the Sports Field for a total of 30 s'],
 ['堅守 10 分鐘','hold out for 10 minutes'],
-['守住運動場 10 分鐘','hold the field for 10 minutes'],
 /* —— 地圖簡介/彩蛋 —— */
 ['警方由尖東沿漆咸道南、科學館道推進，暢運道遭天橋封鎖；抗爭者防守中央平台。西面是歷史博物館與科學館，東面紅磡站。','Police push from Tsim Sha Tsui East along Chatham Road South and Science Museum Road, with Cheong Wan Road sealed under the flyover; protesters hold the Central Podium. Museums to the west, Hung Hom Station to the east.'],
 ['暢運道天橋上有被焚毀的裝甲車殘骸（2019.11.17）；抗爭者可於橋上按 E 遊繩下降（只能下、不能上）','The burnt armoured vehicle sits on the Cheong Wan Road flyover (17 Nov 2019); protesters can rope down from the bridge with E (one way only)'],
 ['真人玩家工兵行到主席台旁按 V，即在議事廳噴上「沒有暴徒 只有暴政」並蓋上英國國旗','Walk a player engineer to the podium and press V to spray “No rioters, only tyranny” and raise the Union Jack'],
-['真人玩家（警察）可攻擊拆毀大學站廣場的民主女神像','A real player (police) can smash the Goddess of Democracy outside University Station'],
+['真人玩家（警察）可攻擊拆毀大學站廣場的民主女神像；抗爭者工兵可於運動場按 V 插上「光復香港 時代革命」旗（不影響戰局）','A real player (police) can smash the Goddess of Democracy outside University Station; a protester engineer can press V at the Sports Field to plant the "Liberate Hong Kong, Revolution of Our Times" flag (no effect on the battle)'],
+['已在運動場插上「光復香港 時代革命」旗幟（不影響戰局）','The "Liberate Hong Kong, Revolution of Our Times" flag now flies over the Sports Field (no effect on the battle)'],
+['光復香港 時代革命旗','"Liberate Hong Kong, Revolution of Our Times" flag'],
 ['帶樽裝水的工兵可清洗清真寺門口的藍色水劑','An engineer with bottled water can wash the blue dye off the mosque entrance'],
 /* —— 通用詞彙（chips／labels，放最後、短詞在後） —— */
 ['抗爭者','Protesters'],['警方','Police'],['警察','Police'],
@@ -2462,7 +2466,7 @@ TR_PAIRS=[
 ['用之不竭','endless'],
 ['無限','Unlimited'],
 ['磚 ','Bricks '],['棍 ','Stick '],['橡膠 ','Rubber '],['催淚 ','Gas '],
-['舉著禁止駛入牌施工的人。士巴拿近戰半徑 34、單下 35 傷害，連揮 4 下便耗盡體力，正職是工程：<em>按 1/2/3 選擇建造物，按 E 施工，按 C 撲滅催淚彈，按 V 噴漆或用樽裝水清洗</em>。每人可同時維持 3 座磚陣、2 座燃燒的雜物、1 個防彈垃圾桶（陣營路障合共 15）——建滿再起，會自動清除自己最早那件。全隊只有你（真人玩家）能建投石機。','The one doing roadworks behind a no-entry sign. Wrench reach 34 at 35 damage a swing — four swings drain your stamina — but the real job is engineering: <em>1/2/3 picks a buildable, E builds, C snuffs tear gas, V sprays or washes</em>. Each engineer maintains up to 3 brick lines, 2 burning debris piles and 1 bin at once.'],
+['舉著禁止駛入牌施工的人。士巴拿近戰半徑 34、單下 35 傷害，連揮 4 下便耗盡體力，正職是工程：<em>按 1/2/3 選擇建造物，按 E 施工，按 C 撲滅催淚彈，按 V 噴漆或用樽裝水清洗</em>。每人可同時維持 3 座磚陣、2 座燃燒的雜物、1 個防彈垃圾桶（陣營路障合共 15）——建滿再起，會自動清除自己最早那件。全隊只有你（真人玩家）能建投石機。','The one doing roadworks behind a no-entry sign. Wrench reach 34 at 35 damage a swing — four swings drain your stamina — but the real job is engineering: <em>1/2/3 picks a buildable, E builds, C snuffs tear gas, V sprays or washes</em>. Each engineer maintains up to 3 brick lines, 2 burning debris piles and 1 bulletproof bin (team barricade cap 15) — build past the cap and your own oldest is cleared automatically. Only you (the real player) can build the catapult.'],
 ['單發','Damage'],['攻速','Rate'],['彈速','Projectile speed'],['每秒 ','per second '],
 ['合共','total'],['指定落點','aimed throw'],['體力消耗','stamina cost'],
 ['連揮上限','max swings'],['連揮','swings'],['揮','swing'],['補滿','refill'],
@@ -2470,16 +2474,10 @@ TR_PAIRS=[
 ['可越樓','clears buildings'],['可擊穿載具','damages vehicles'],['拋物線','arcing'],
 ['選擇建造物','picks a buildable'],['施工','builds'],['撲滅催淚彈','snuffs tear gas'],
 ['或用樽裝水清洗','or washes with bottled water'],
-['每人可同時維持 3 座磚陣、2 堆燃燒的雜物、1 個垃圾桶。','Each engineer maintains up to 3 brick lines, 2 burning debris piles and 1 bin.'],
-['堆燃燒的雜物、','burning debris piles, '],[' 堆',''],
 
 /* —— 兵種 tips（實際原文整句） —— */
 ["警棍單發 25 傷害，揮出去招呼的是身邊最近那一位。方盾加豬嘴（耐久 400）令他<em>站在己方催淚煙中亦安然無恙</em>——這是警方推進的核心。移動最慢，職責是頂在最前方吸收磚石；但步兵木棍的 51 比你的 34 長，近身交戰切勿戀戰。","Baton hits for 25, landing on whoever is nearest. Tower shield plus police gas mask (400) let him <em>stand unharmed inside his own tear gas</em> \u2014 the core of every police push. Slowest mover; the job is soaking bricks at the very front. The infantry stick's 51 beats your 34 \u2014 don't linger in close trades."],
-["目的不是殺傷，而是<em>封鎖道路</em>。把汽油彈投在盾陣前方兩步，迫使對方停下或繞路。火焰能與催淚煙互相抵銷——見煙就投。留意：火燒不到天橋上的人。","The point is not kills but <em>closing roads</em>. Drop the molotov two steps ahead of the shield line and force a stop or a detour. Fire cancels tear gas \u2014 see smoke, throw. Note: flames cannot reach anyone on a bridge."],
-["全隊最耐打，<em>而且有豬嘴</em>，可以直接踩進催淚煙近身。<em>主武器木棍</em>（左鍵）：20 傷害、近戰半徑 51（比警棍 34 遠一半），揮出去自然落在身邊最近的敵人身上；<em>副武器磚頭</em>（右鍵）：35 傷害遠程投擲。連揮 5 棍便耗盡體力，須打打停停。木盾雖薄，時刻護身。","Toughest on the team, <em>with a gas mask</em> \u2014 walk straight into the gas and close in. <em>Primary: wooden stick</em> (Left Click), 20 damage at reach 51 (half again past the baton's 34), landing on whoever is nearest; <em>secondary: bricks</em> (Right Click), 35-damage throws. Five swings drain your stamina \u2014 fight in bursts. The wooden shield is thin but always up."],
-["單發 10 傷害，單人 10 DPS。<em>優勢在人數與射速</em>：四名彈叉手齊射即有 40 DPS。保持距離消磨對方的盾，切勿貿然衝前。","10 damage a shot, 10 DPS alone. <em>The edge is numbers and rate</em>: four slingers volleying is 40 DPS. Grind their shields from range; never rush in."],
-["舉著禁止駛入牌施工的人。士巴拿近戰半徑 34、單下 35 傷害，連揮 4 下便耗盡體力，正職是工程：<em>按 1/2/3 選擇建造物，按 E 施工，按 C 撲滅催淚彈，按 V 噴漆或用樽裝水清洗</em>。每人可同時維持 3 座磚陣、2 座燃燒的雜物、1 個防彈垃圾桶（陣營路障合共 15）——建滿再起，會自動清除自己最早那件。全隊只有你（真人玩家）能建投石機。","The one doing roadworks behind a no-entry sign. Wrench reach 34 at 35 damage a swing — four swings drain your stamina \u2014 the real job is engineering: <em>1/2/3 picks a buildable, E builds, C snuffs tear gas, V sprays or washes</em>. Each engineer maintains up to 3 brick lines, 2 burning debris piles and 1 bin."],
-["警方由大學站、二號橋沿大學道向上推進；抗爭者防守下校園夏鼎基運動場。運動場內朝二號橋一側有一道現成防線——磚陣與燃燒的雜物，拆不掉，只有裝甲車輾得過去。","Police push uphill from University Station and No. 2 Bridge along University Ave; protesters hold the Sports Field on the lower campus. A ready-made line of bricks and burning debris faces the bridge — it cannot be cleared, only crushed by the armoured vehicle."],
+["警方由大學站、二號橋沿大學道向上推進；抗爭者防守下校園夏鼎基運動場。","Police push uphill from University Station and No. 2 Bridge along University Ave; protesters hold the Sports Field on the lower campus."],
 ["抗爭者由添美道、夏愨道方向衝擊立法會綜合大樓；警方防守議事廳。","Protesters storm the LegCo Complex from Tim Mei Avenue and Harcourt Road; police defend the Chamber."],
 ["沿彌敦道南北推進，利用橫街迂迴。沒有佔領點，純粹比拼擊倒人數。","Push north–south along Nathan Road, flanking through the side streets. No capture point — a pure knockdown count."],
 ["平日是最靚的山城校園，今天只是一份等高線地形圖。","The prettiest hillside campus on any other day; today, just a contour map."],
@@ -2491,10 +2489,9 @@ TR_PAIRS=[
 ["沙田","Sha Tin"],
 ["馬料水","Ma Liu Shui"],
 ["模式","mode"],
-["目標","target"],
 ["擊倒","downs"],
 ["純擊倒戰","deathmatch"],
-['工兵以樽裝水清洗清真寺門口的藍色水劑（按 V）','A player engineer washes the blue dye off the mosque entrance with bottled water (press V)'],
+['真人玩家工兵以樽裝水清洗清真寺門口的藍色水劑（按 V）','A real player engineer washes the blue dye off the mosque entrance with bottled water (press V)'],
 ['尖沙咀 · 彌敦道一帶','Tsim Sha Tsui · around Nathan Road'],
 ['單發傷害 ','Damage '],
 ['近戰半徑 ','Melee reach '],
@@ -2505,7 +2502,6 @@ TR_PAIRS=[
 [' 名Police',' police'],
 [' 名Proteste',' proteste'],
 [' 名',' '],
-['持槍防暴警察','Riot Gunner'],
 ['警察 在場 / 總數','Police on field / total'],
 ['抗爭者 在場 / 總數','Protesters on field / total'],
 ['警察被擊倒','Police downed'],
@@ -2530,8 +2526,6 @@ TR_PAIRS=[
 ['紅磡站巴士總站','Hung Hom Bus Terminus'],
 ['紅磡海底隧道','Cross-Harbour Tunnel'],
 ['沙田 · 馬料水','Sha Tin · Ma Liu Shui'],
-['紅磡 · 理工大學','Hung Hom · PolyU'],
-['金鐘 · 添馬','Admiralty · Tamar'],
 ['香港文化中心','Hong Kong Cultural Centre'],
 ['香港歷史博物館','Museum of History'],
 ['香港科學館','Science Museum'],
@@ -2611,7 +2605,6 @@ TR_PAIRS=[
 ['圖書館平台','Library Podium'],
 ['看台','Stands'],
 ['游泳池','Swimming Pool'],
-['夏鼎基運動場','Sports Field'],
 ['夏愨大廈','Harcourt House'],
 ['夏愨道','Harcourt Road'],
 ['添馬公園','Tamar Park'],
@@ -2669,7 +2662,6 @@ TR_PAIRS=[
 ['海防道','Haiphong Road'],
 ['金巴利道','Kimberley Road'],
 ['北京道','Peking Road'],
-['訊號山花園','Signal Hill Garden'],
 ['訊號山','Signal Hill'],
 ['維多利亞港','Victoria Harbour'],
 ['體育館','Gymnasium'],
@@ -2681,7 +2673,6 @@ TR_PAIRS=[
 ['噴漆／清洗','spray / wash'],
 ['上落車／投石機','vehicle / catapult'],
 ['裝填','reload'],
-['雪糕筒','cone'],
 ['圖鑑','codex'],
 ['記分板','scoreboard'],
 ['移動','move'],['瞄準','aim'],['滑鼠','Mouse'],
@@ -3757,6 +3748,27 @@ function render(){
       ctx.strokeStyle= DAY?'#8c7150':'#6b563c'; ctx.lineWidth=1.5; ctx.strokeRect(-30,-15,60,30);
       if(G.eggs.flag) drawUnionJack(68,38);            // 主席台上蓋英國國旗（2019.7.1 場景）
     }
+    if(p.type==='flagspot'){                     // 運動場旗幟位：插旗前只係一個淡圈，插旗後升起黑底白字旗
+      if(G.eggs.hkflag){
+        ctx.beginPath(); ctx.ellipse(SUN.x*10,SUN.y*10,9,5,0,0,7); ctx.fill();
+        ctx.strokeStyle= DAY?'#4a4f57':'#8a93a1'; ctx.lineWidth=3;   // 旗杆
+        ctx.beginPath(); ctx.moveTo(0,6); ctx.lineTo(0,-48); ctx.stroke();
+        const wv=Math.sin(G.t*3)*2;                                  // 旗面（黑底）微微飄動
+        ctx.fillStyle='#14171c';
+        ctx.beginPath(); ctx.moveTo(1,-48); ctx.lineTo(42,-44+wv);
+        ctx.lineTo(42,-24+wv*0.6); ctx.lineTo(1,-26); ctx.closePath(); ctx.fill();
+        ctx.strokeStyle='rgba(0,0,0,.45)'; ctx.lineWidth=1; ctx.stroke();
+        ctx.strokeStyle='rgba(255,255,255,.92)'; ctx.lineWidth=1.1;  // 白字筆劃示意（八個字）
+        for(let i=0;i<8;i++){ const fx=6+(i%4)*8.6, fy=-42+Math.floor(i/4)*9+wv*0.5;
+          ctx.beginPath(); ctx.moveTo(fx,fy); ctx.lineTo(fx+4,fy+4);
+          ctx.moveTo(fx+4,fy); ctx.lineTo(fx,fy+4); ctx.stroke(); }
+      } else {
+        ctx.fillStyle='rgba(232,226,208,.3)';
+        ctx.beginPath(); ctx.arc(0,0,4.5,0,7); ctx.fill();
+        ctx.strokeStyle='rgba(232,226,208,.35)'; ctx.lineWidth=1.5;
+        ctx.setLineDash([4,4]); ctx.beginPath(); ctx.arc(0,0,10,0,7); ctx.stroke(); ctx.setLineDash([]);
+      }
+    }
     if(p.type==='mosque'){                       // 門口地面嘅藍色水劑污漬
       if(!G.eggs.mosque){
         ctx.fillStyle='rgba(38,96,206,.5)';
@@ -4095,7 +4107,7 @@ function drawMini(){
   ctx.beginPath(); ctx.moveTo(9,MH-11); ctx.lineTo(9+px,MH-11);
   ctx.moveTo(9,MH-14); ctx.lineTo(9,MH-8); ctx.moveTo(9+px,MH-14); ctx.lineTo(9+px,MH-8); ctx.stroke();
   ctx.fillStyle='rgba(223,230,239,.6)'; ctx.font='8px "Chakra Petch","PingFang HK","Noto Sans HK","Microsoft JhengHei",sans-serif'; ctx.textAlign='left';
-  ctx.fillText('100 m',9,MH-17);
+  ctx.fillText(Lg('100 米','100 m'),9,MH-17);
 
   ctx.fillStyle='rgba(180,193,209,.95)'; ctx.font='600 10px "Chakra Petch","PingFang HK","Noto Sans HK","Microsoft JhengHei",sans-serif';
   ctx.letterSpacing='2px'; ctx.fillText(tEN(M.place),0,-6); ctx.letterSpacing='0px';
@@ -4351,8 +4363,9 @@ function start(){
   });
 
   const roster=[];
-  for(const k in CFG.POLICE_N) for(let i=0;i<CFG.POLICE_N[k];i++) roster.push(k);
-  const per = G.map.protPer;                                            // 圖級覆蓋（添馬 4）
+  const PolN = G.map.polN || CFG.POLICE_N;                              // 圖級覆蓋（理大、添馬 5+5）
+  for(const k in PolN) for(let i=0;i<PolN[k];i++) roster.push(k);
+  const per = G.map.protPer;                                            // 圖級覆蓋（現時無地圖使用，保留機制）
   const PN = per ? {archer:per,mage:per,slinger:per,infantry:per,engineer:per}
            : (G.map.mode==='deathmatch' ? CFG.PROT_N_DM : CFG.PROT_N);
   for(const k in PN)   for(let i=0;i<PN[k];i++)   roster.push(k);
@@ -4427,7 +4440,7 @@ document.getElementById('go').onclick=()=>{ if(!G.id)G.id='cuhk'; start(); };
 document.getElementById('again').onclick=()=>{
   document.getElementById('over').style.display='none';
   document.getElementById('hud').hidden=true;
-  document.getElementById('menu').style.display='flex'; paintMenu();
+  document.getElementById('menu').style.display='block'; paintMenu();   // 用返 block：#menu 冇 flex 樣式，設成 flex 會令主頁縮埋一邊
 };
 /* ==========================================================================
    14. 圖鑑
@@ -4698,7 +4711,7 @@ function codexData(){
          armour:'第二座位風景最好；保險公司言明不予承保。'}[k],
       d:`${v.seats} 座 · 耐久 ${v.hp} · 極速 ${Math.round(v.top)}`,
       t:`撞擊傷害＝車速 × ${v.mul}，只會撞傷敵方——司機同陣營的人不會被自己人輾過。與建築物或路障碰撞不會令載具受損，但<b>載具與載具相撞雙方皆會受損</b>（傷害隨車速）。`+
-        (v.crush?'輾磚陣同樣按車速磨損對方、自身每次承受車速 ×1.25 的傷害；運動場的現成防線只有它輾得過。司機可以是持盾警察，但車頂探頭位必須由持槍防暴警察擔任，滿員才會開動。車頂可探身開槍（居高臨下，射程 +10%），攻擊打在車上只會損耗車體；車輛被毀時全員陣亡。其他載具的乘員一律無法向外攻擊。警察玩家一登上裝甲車，最近的 AI 持槍警便會趕來補上車頂位，其他 AI 不會與玩家爭車。'
+        (v.crush?'輾磚陣同樣按車速磨損對方、自身每次承受車速 ×1.25 的傷害；理大的現成防線只有它輾得過。司機可以是持盾警察，但車頂探頭位必須由持槍防暴警察擔任，滿員才會開動。車頂可探身開槍（居高臨下，射程 +10%），攻擊打在車上只會損耗車體；車輛被毀時全員陣亡。其他載具的乘員一律無法向外攻擊。警察玩家一登上裝甲車，最近的 AI 持槍警便會趕來補上車頂位，其他 AI 不會與玩家爭車。'
                 :'撞磚陣會按車速把它磨損，車身每次碰撞承受車速 ×1.25 的損傷。AI 司機一人即可開車衝擊敵人；沒有目標時會駛向佔領點，到達點邊全員下車加入戰鬥。')+
         ' 的士與警車任何一方皆可登上；<b>裝甲車只限警方使用</b>。AI 只會順路登上非常接近的空車，也不會登上其他 AI 正在駕駛的的士或警車。車輛被毀後化為永久路障。'+
         `${DATA}座位 ${v.seats} · 耐久 ${v.hp} · 加速 ${Math.round(v.accel)} · 極速 ${Math.round(v.top)}（倒車 45%）· 撞擊倍率 ×${v.mul} · 車身 ${v.w}×${v.h}`})),
@@ -4707,7 +4720,7 @@ function codexData(){
        t:`踏入者每秒承受 ${B.fire.dot} 傷害，人車皆然；範圍小於汽油彈火場。不阻擋通行。<b>警察可按 E 以 2.5 秒拆除，亦可用催淚彈直接撲滅</b>（煙與火同歸於盡）。${DATA}每秒傷害 ${B.fire.dot} · 半徑 ${B.fire.r} · 持續 30 秒 · 建造 ${B.fire.build} 秒 · 每名工兵上限 ${OWN_CAP.fire} 座 · 同陣營合共 ${SIDE_CAP} · 滿額自動清除最舊一件`},
       {barr:'brick',n:'磚陣',d:`耐久 ${B.brick.hp} · 半徑 ${B.brick.r}`,f:'行人請便，車輛止步，裝甲車請自行衡量後果。',
        t:`車輛撞磚陣會把它磨損——磨損量＝車速 ×2：全速一撞即碎，慢速只能一下一下刮；而每次碰撞，車身承受的損傷＝車速 ×1.25——撞得越狠，賠得越重。用車開路，等於用車身找數。警察可按 E 以 2.5 秒拆除。${DATA}耐久 ${B.brick.hp} · 半徑 ${B.brick.r} · 阻擋載具（行人可通過）· 車撞磨損隨車速 · 撞方損傷＝車速×1.25 · 建造 ${B.brick.build} 秒 · 每名工兵上限 ${OWN_CAP.brick} 座 · 同陣營合共 ${SIDE_CAP} · 滿額自動清除最舊一件`},
-      {barr:'bin',n:'垃圾桶',d:`耐久 ${B.bin.hp} · 防彈 · 部署 ${B.bin.build} 秒`,f:'平日吃煙蒂，今日吃子彈。',
+      {barr:'bin',n:'垃圾桶',d:`耐久 ${B.bin.hp} · 半徑 ${B.bin.r} · 防彈`,f:'平日吃煙蒂，今日吃子彈。',
        t:`兩秒部署一個防彈掩體：橡膠彈應聲落地，行人與車輛亦過不了——但弓箭與彈叉會越頂飛過，汽油彈和催淚彈更是拋物線直入。每名工兵同時只得一個，再部署會自動清除舊的一個；警察可按 E 以 2.5 秒拆除。${DATA}耐久 ${B.bin.hp} · 半徑 ${B.bin.r} · 擋橡膠彈／擋人／擋車 · 弓箭彈叉可越過 · 部署 ${B.bin.build} 秒 · 每名工兵 ${OWN_CAP.bin} 個 · 拋物線武器可越過`},
       {barr:'catapult',n:'投石機',d:`射程 ${CFG.CATA.range} · 每 ${CFG.CATA.rate} 秒一發 · 彈藥無限`,f:'中世紀的機械，發射今天的爆竹——歷史自己會押韻。',
        t:`發射爆竹：落地產生小規模爆炸（半徑 ${CFG.CATA.blast}，傷害 ${CFG.CATA.dmg}），可越過建築物、指定落點，射程比橡膠彈更遠。任何抗爭者按 F 即可操作，AI 亦會自動使用；再按 F 離開，投石機被摧毀時操作者會被彈出。每座投石機另有一名 AI 抗爭者貼身留守（此任務優先於佔點），AI 亦會優先攻擊試圖拆機的警察。建造需時 ${CFG.CATA.build} 秒；警方可花 ${CFG.CATA.destroy} 秒摧毀。只有真人玩家工兵能建造，每人限建一座，全場上限 ${CFG.CATA.maxField} 座。${DATA}爆竹傷害 ${CFG.CATA.dmg} · 爆炸半徑 ${CFG.CATA.blast} · 射程 ${CFG.CATA.range} · 每 ${CFG.CATA.rate} 秒一發 · 彈藥無限 · 建造 ${CFG.CATA.build} 秒 · 摧毀敵方 ${CFG.CATA.destroy} 秒`},
@@ -4753,7 +4766,7 @@ function mapThumb(g,M,w,h){
   g.moveTo(ox+10,oy+M.h*s-16); g.lineTo(ox+10,oy+M.h*s-8);
   g.moveTo(ox+10+px,oy+M.h*s-16); g.lineTo(ox+10+px,oy+M.h*s-8); g.stroke();
   g.fillStyle='rgba(20,26,34,.85)'; g.font='700 9px "Chakra Petch","PingFang HK","Noto Sans HK","Microsoft JhengHei",sans-serif'; g.textAlign='left';
-  g.fillText('100 米', ox+12, oy+M.h*s-19);
+  g.fillText(Lg('100 米','100 m'), ox+12, oy+M.h*s-19);
 }
 /* ==========================================================================
    圖鑑展示層
@@ -4824,7 +4837,7 @@ function gearObj(g,w,h,ic){
      umbrella:()=>figure(8,10,'mage'),     vest:()=>figure(8,10,'slinger'),
      mask:()=>figure(8,10,'mage'),         policeMask:()=>figure(8,10,'shield'),
      cone:()=>figure(8,10,'engineer'),     spray:()=>figure(8,10,'engineer'),
-     woodShield:()=>figure(8,10,'infantry'), catapult:()=>figure(8,10,'engineer'),
+     catapult:()=>figure(8,10,'engineer'),
   }[ic]||(()=>{}))();
   g.restore();
 }
@@ -4862,18 +4875,22 @@ function barrObj(g,w,h,kind){
 function detailCanvas(e){
   return iconCanvas(CXW,CXH,(g,w,h)=>{
     if(e.map){ mapThumb(g,MAPS[e.map],w,h-19);
-      caption(g,w,h, MAPS[e.map].place+' · 約 '+Math.round(MAPS[e.map].w*MAPS[e.map].mpp)+
-        '×'+Math.round(MAPS[e.map].h*MAPS[e.map].mpp)+' 米'); return; }
+      caption(g,w,h, tEN(MAPS[e.map].place+' · 約 '+Math.round(MAPS[e.map].w*MAPS[e.map].mpp)+
+        '×'+Math.round(MAPS[e.map].h*MAPS[e.map].mpp)+' 米')); return; }
     sceneBG(g,w,h);
     if(e.unit){ show3D(g,w,h,(gg,ww,hh)=>roleObj(gg,ww,hh,e.unit), 7);
-      caption(g,w,h,`裝備 ${ROLE[e.unit].gear.length} 件 · 武器 ${ROLE[e.unit].sec?2:1} 種 · 速度 ${ROLE[e.unit].speed}`); }
+      caption(g,w,h,Lg(`裝備 ${ROLE[e.unit].gear.length} 件 · 武器 ${ROLE[e.unit].sec?2:1} 種 · 速度 ${ROLE[e.unit].speed}`,
+        `Gear ${ROLE[e.unit].gear.length} · Weapons ${ROLE[e.unit].sec?2:1} · Speed ${ROLE[e.unit].speed}`)); }
     else if(e.veh){ show3D(g,w,h,(gg,ww,hh)=>vehObj(gg,ww,hh,e.veh), 11);
-      const S=CFG.VEH[e.veh]; caption(g,w,h,`${S.seats} 座 · 耐久 ${S.hp} · 撞擊 = 車速 × ${S.mul} · 左邊人形做比例`); }
+      const S=CFG.VEH[e.veh]; caption(g,w,h,Lg(`${S.seats} 座 · 耐久 ${S.hp} · 撞擊 = 車速 × ${S.mul} · 左邊人形做比例`,
+        `Seats ${S.seats} · Durability ${S.hp} · Ram = speed × ${S.mul} · figure at left for scale`)); }
     else if(e.barr){ show3D(g,w,h,(gg,ww,hh)=>barrObj(gg,ww,hh,e.barr), 9);
       const B = e.barr==='catapult' ? {...CFG.CATA, hp:CFG.CATA.destroy*44} : CFG.BARR[e.barr];
       caption(g,w,h, e.barr==='catapult'
-        ? `爆竹 · 射程 ${CFG.CATA.range} · 爆炸半徑 ${CFG.CATA.blast} · 任何抗爭者按 F 操作`
-        : `耐久 ${B.hp===Infinity?'不可破壞':B.hp} · 半徑 ${B.r}`+(B.dot?` · 每秒 ${B.dot}（持續）`:'')); }
+        ? Lg(`爆竹 · 射程 ${CFG.CATA.range} · 爆炸半徑 ${CFG.CATA.blast} · 任何抗爭者按 F 操作`,
+             `Firecrackers · Range ${CFG.CATA.range} · Blast radius ${CFG.CATA.blast} · any protester operates with F`)
+        : Lg(`耐久 ${B.hp===Infinity?'不可破壞':B.hp} · 半徑 ${B.r}`+(B.dot?` · 每秒 ${B.dot}（持續）`:''),
+             `Durability ${B.hp===Infinity?'indestructible':B.hp} · Radius ${B.r}`+(B.dot?` · ${B.dot}/s (DoT)`:''))); }
     else { show3D(g,w,h,(gg,ww,hh)=>gearObj(gg,ww,hh,e.ic), 9); }
   }, DAY?'#9ea49f':'#141a22');
 }
@@ -4902,13 +4919,16 @@ function TUT_DATA(){
     { n:Lg('目標與勝利','Objectives & victory'),
       t:Lg(`畫面邊緣的<em>黃色箭嘴</em>永遠指向你需要前往的方向——佔領圖指向佔領點（並標示距離米數），`
           +`尖沙咀死鬥圖則指向最近的敵人。<br><b>佔領圖</b>：進攻方在點內<b>累計</b>指定秒數即獲勝（各圖秒數見圖鑑），`
-          +`防守方堅守 10 分鐘即獲勝；點內混戰時，人數佔優的一方以半速推進。<br>`
+          +`防守方堅守 10 分鐘即獲勝。<br><b>佔領時間規則</b>：只有一方在點內時，佔領時間以全速增加（進攻方）或減少（防守方）——`
+          +`即防守方可以站入點內抵消進攻方已累積的佔領時間；點內混戰時，人數佔優的一方以半速推進，人數相同則凍結。<br>`
           +`<b>死鬥圖</b>：純粹比拼擊倒人數——抗爭者擊倒 200 名警察，或警方擊倒 200 名抗爭者即獲勝。<br>`
           +`頂欄隨時顯示佔領進度、剩餘時間與擊倒數。`,
           `The <em>yellow arrow</em> at the screen edge always points where you need to go — to the capture point`
           +` (with the distance in metres) on capture maps, or to the nearest enemy on the Tsim Sha Tsui deathmatch map.<br>`
           +`<b>Capture maps</b>: the attacker wins by holding the point for a <b>cumulative</b> number of seconds (per-map values are in the codex);`
-          +` the defender wins by holding out for 10 minutes. In a contested point, the side with more bodies pushes at half speed.<br>`
+          +` the defender wins by holding out for 10 minutes.<br><b>Capture-time rules</b>: with only one side inside, the clock moves at full speed —`
+          +` up for the attacker, down for the defender — so defenders can step in to roll back accumulated progress.`
+          +` In a contested point, the side with more bodies pushes at half speed; an even split freezes the clock.<br>`
           +`<b>Deathmatch</b>: a pure knockdown race — protesters win by downing 200 police; police win by downing 200 protesters.<br>`
           +`The top bar always shows capture progress, time remaining and knockdown counts.`) },
     { n:Lg('建造工程（工兵）','Engineering'),
