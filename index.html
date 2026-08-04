@@ -300,8 +300,8 @@ function tEN(str){
 const CFG = {
   HP: 100,
   RESPAWN: 10, POL_RESPAWN: 10, INVULN: 5,
-  POLICE_N: { shield:6, gunner:6 },
-  // 警察基準 6+6 = 12 人（中大、尖沙咀）；理大、添馬以圖級 polN 覆蓋為 5+5 = 10 人。
+  POLICE_N: { shield:7, gunner:7 },
+  // 警察基準 7+7 = 14 人（中大、尖沙咀）；理大、添馬以圖級 polN 覆蓋為 6+6 = 12 人。
   PROT_N:   { archer:3, mage:3, slinger:3, infantry:3, engineer:3 },   // 抗爭者佔領圖各 3 人 = 15 人（中大、理大、添馬）
   PROT_N_DM:{ archer:4, mage:4, slinger:4, infantry:4, engineer:4 },   // 純擊倒戰（尖沙咀）各 4 人 = 20 人
 
@@ -414,7 +414,6 @@ const MAPS = {
     attacker:'pol',
     win:{ pol:'累計佔領夏鼎基運動場 30 秒', prot:'堅守 10 分鐘' }, capHold:30,
     egg:'真人玩家（警察）可攻擊拆毀大學站廣場的民主女神像；抗爭者工兵可於運動場按 V 插上「光復香港 時代革命」旗（不影響戰局）',
-    /* 運動場現成防線（永久磚陣＋燃燒的雜物）已移除 */
     spawn:{ pol:{x:2190,y:270}, prot:{x:830,y:820} },   // 警方出生點推遠至大學站以北，離運動場越遠越好
     roads:[
       road(2250,0,150,1800,'吐露港公路'), road(2150,0,86,1800,'東鐵綫'),
@@ -460,14 +459,13 @@ const MAPS = {
      ------------------------------------------------------------------ */
   polyu: {
     zh:'理大戰役', w:1900, h:1500, mpp:0.22, north:0,
-    polN:{ shield:5, gunner:5 },   // 理大：警方 5 盾＋5 槍＝10 人（攻）；抗爭者用基準各 3 人＝15 人（守）
+    polN:{ shield:6, gunner:6 },   // 理大：警方 6 盾＋6 槍＝12 人（攻）；抗爭者用基準各 3 人＝15 人（守）
     place:'紅磡 · 理工大學',
     brief:'警方由尖東沿漆咸道南、科學館道推進，暢運道遭天橋封鎖；抗爭者防守中央平台。西面是歷史博物館與科學館，東面紅磡站。',
     attacker:'pol',
     win:{ pol:'累計佔領中央平台 30 秒', prot:'堅守 10 分鐘' }, capHold:30,
     egg:'暢運道天橋上有被焚毀的裝甲車殘骸（2019.11.17）；抗爭者可於橋上按 E 遊繩下降（只能下、不能上）',
     spawn:{ pol:{x:170,y:1400}, prot:{x:1430,y:160} },   // 警方由西南推進；守方由東北（公主道連接路）重新集結，與佔領點保持公平距離
-    forts:[ {kind:'brick',x:660,y:800}, {kind:'fire',x:730,y:830} ],   /* 西南走廊現成防線：磚陣×1＋燃燒的雜物×1 */
     roads:[
       road(60,0,130,1500,'康莊道'), road(0,560,190,120,'紅隧方向'),
       road(330,0,130,1500,'漆咸道南'),
@@ -510,7 +508,7 @@ const MAPS = {
      ------------------------------------------------------------------ */
   tamar: {
     zh:'添馬戰役', w:2000, h:1500, mpp:0.30, north:0,
-    polN:{ shield:5, gunner:5 },   // 添馬：警方 5 盾＋5 槍＝10 人（守）；抗爭者用基準各 3 人＝15 人（攻）
+    polN:{ shield:6, gunner:6 },   // 添馬：警方 6 盾＋6 槍＝12 人（守）；抗爭者用基準各 3 人＝15 人（攻）
     place:'金鐘 · 添馬',
     brief:'抗爭者由添美道、夏愨道方向衝擊立法會綜合大樓；警方防守議事廳。',
     attacker:'prot',
@@ -4363,7 +4361,7 @@ function start(){
   });
 
   const roster=[];
-  const PolN = G.map.polN || CFG.POLICE_N;                              // 圖級覆蓋（理大、添馬 5+5）
+  const PolN = G.map.polN || CFG.POLICE_N;                              // 圖級覆蓋（理大、添馬 6+5）
   for(const k in PolN) for(let i=0;i<PolN[k];i++) roster.push(k);
   const per = G.map.protPer;                                            // 圖級覆蓋（現時無地圖使用，保留機制）
   const PN = per ? {archer:per,mage:per,slinger:per,infantry:per,engineer:per}
