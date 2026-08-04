@@ -763,7 +763,7 @@ MAPS.tamar.decks=[
   {x:496,y:1120,w:58,h:210,zh:'海富天橋',
    stairs:[{x:496,y:1076,w:58,h:46},{x:496,y:1328,w:58,h:46}]},
   {x:1880,y:1130,w:58,h:204,zh:'中信天橋',
-   stairs:[{x:1880,y:1086,w:58,h:44},{x:1880,y:1338,w:58,h:44}]},
+   stairs:[{x:1880,y:1086,w:58,h:44},{x:1880,y:1332,w:58,h:44}]},
 ];
 MAPS.tst.decks=[
   {x:1850,y:726,w:190,h:58,zh:'漆咸道南行人天橋',        // 加連威老道口跨漆咸道南，通往科學館一帶
@@ -819,6 +819,7 @@ function levelAt(x,y,cur,mvx,mvy){
     }
     if(x>d.x-6&&x<d.x+d.w+6&&y>d.y-6&&y<d.y+d.h+6) return cur;   // 橋面／橋底（含貼邊容差，同 footprint 一致）
   }
+  if(cur===1 && onDeckFootprint(x,y)) return 1;
   return 0;
 }
 function onStair(u){ return !!stairDeckAt(u.x,u.y); }
