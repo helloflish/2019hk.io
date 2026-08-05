@@ -272,14 +272,12 @@ var TR_PAIRS=null;   // [zh,en]，按 zh 長度降序；初始化喺文件尾
 const PUNCT=[['（',' ('],['）',') '],['、',', '],['。','. '],['，',', '],['「','“'],['」','”'],
   ['　',' '],['：',': '],['；','; '],['％','%'],['｜',' | '],['／','/']];
 const EN_FIX=[
-  ['every 10 s refills 10 arrows.','Refills 10 arrows every 10 s.'],
   ['every 10 s refills 3; thrown','Refills 3 every 10 s; thrown'],
-  ['every 5 s refills 3; now','Refills 3 every 5 s; now'],
-  ['every 10 s refills 25 shots','Refills 25 shots every 10 s'],
+  ['every 4 s refills 3; now','Refills 3 every 4 s; now'],
   ['· every 10 s refills','· refill every 10 s'],
-  ['· every 5 s refills','· refill every 5 s'],
+  ['· every 4 s refills','· refill every 4 s'],
   ['per second 22','DoT 22/s'],
-  ['per second 15','DoT 15/s'],
+  ['per second 10','DoT 10/s'],
   ['raiders carry none','riot gunners carry none'],
   [' · speed ',' · Speed '],
   ['downs 200 Police','down 200 police'],
@@ -322,7 +320,7 @@ const CFG = {
     slingshot:  { dmg:17,  rate:0.5,  range:320, speed:620 },   // 彈叉 17 傷害 · 無限彈藥
     cracker:    { dmg:45,  aoe:55, rate:2.2, range:520, speed:470 },   // 投石機爆竹 · 2.2 秒一發
     bow:        { dmg:40,  rate:0.8,  range:430, speed:760 },   // 弓箭：40 傷害 · 每 0.8 秒 · 無限彈藥（效仿彈叉）
-    brick:      { dmg:35,  rate:0.9,  range:230, speed:430, mag:3,  refill:5,  arc:true },   // 磚頭 35 傷害 · 每 5 秒補滿
+    brick:      { dmg:35,  rate:0.9,  range:230, speed:430, mag:3,  refill:4,  arc:true },   // 磚頭 35 傷害 · 每 4 秒補滿
   },
 
   VEH: {
@@ -342,11 +340,11 @@ const CFG = {
   // 近戰體力：一輪爆發之後要抖返，持續 DPS 唔再無限
   STAM: { max:100, regen:15, cost:{ baton:20, stick:20, wrench:25 } },
 
-  BARR_GAP: 90,          // 路障之間最少空隙
+  BARR_GAP: 90,          // 路障之間最少空隙（GAP 直接讀呢個值）
   CATA: { build:5,  dismantle:5, destroy:5.5, maxField:2, r:24,
           range:520, rate:2.2, blast:55, dmg:45 },   // 投石機：爆竹無限，2.2 秒一炮，射程比槍遠
   CONE_REFILL: 10,
-  ENG_BARRICADES: 10,
+  /* 工兵路障上限唔喺呢度：每人上限見 OWN_CAP（磚陣 3、雜物 2、垃圾桶 1），陣營上限見 SIDE_CAP（15） */
   CAP_HOLD: 30,      // checkpoint 佔領秒數
   DEFEND: 600        // 堅守 10 分鐘
 };
@@ -375,9 +373,9 @@ const INFO = {
   mage:    { ehp:'250', dps:'22/秒 × 5 秒', rng:'280', ammo:'3 個 · 每 10 秒補滿',
              fl:'我不生產火，我只是火的搬運工。',
              tip:'目的不是殺傷，而是<em>封鎖道路</em>。把汽油彈投在盾陣前方兩步，迫使對方停下或繞路。火焰能與催淚煙互相抵銷——見煙就投。留意：火燒不到天橋上的人。' },
-  infantry:{ ehp:'350', dps:'棍 15（爆發 50）· 磚 21', rng:'棍 51 · 磚 230',
+  infantry:{ ehp:'350', dps:'棍 15（爆發 50）· 磚 26.3', rng:'棍 51 · 磚 230',
              fl:'隊伍裡最厚的一堵牆——不過牆也會攰。',
-             ammo:'磚 3 個（右鍵副武器）· 每 5 秒補滿',
+             ammo:'磚 3 個（右鍵副武器）· 每 4 秒補滿',
              tip:'全隊最耐打，<em>而且有豬嘴</em>，可以直接踩進催淚煙近身。<em>主武器木棍</em>（左鍵）：20 傷害、近戰半徑 51（比警棍 34 遠一半），揮出去自然落在身邊最近的敵人身上；<em>副武器磚頭</em>（右鍵）：35 傷害遠程投擲。連揮 5 棍便耗盡體力，須打打停停。木盾雖薄，時刻護身。' },
   slinger: { ehp:'300', dps:'34', rng:'320', ammo:'無限',
              fl:'一個人是騷擾，四個人是火力，二十個人是天氣。',
@@ -900,7 +898,7 @@ function makeUnit(role,x,y,isPlayer){
     isPlayer:!!isPlayer, target:null, think:0, cd:{}, veh:null, seat:-1,
     burn:0, gasIn:0,
     ammo:{}, reloading:0, refill:{},
-    cones:3, water:1, builds:CFG.ENG_BARRICADES, stam:CFG.STAM.max, job:null, pick:'brick', lvl:0
+    cones:3, water:1, stam:CFG.STAM.max, job:null, pick:'brick', lvl:0
   };
   // 護甲池
   u.arm={};
@@ -987,7 +985,7 @@ function revive(u){
   u.x=sp.x+rnd(-70,70); u.y=sp.y+rnd(-70,70);
   u.arm={}; for(const g of R.gear)u.arm[g]=CFG.GEAR[g];
   for(const w in u.ammo)u.ammo[w]=CFG.W[w].mag;
-  u.reloading=0; u.cones=3; u.water=1; u.builds=CFG.ENG_BARRICADES; u.stam=CFG.STAM.max;
+  u.reloading=0; u.cones=3; u.water=1; u.stam=CFG.STAM.max;
   u.boardTarget=null; u.job=null; u.buildSpot=null; u.lvl=0;
 }
 
@@ -1301,12 +1299,14 @@ function stepVeh(dt){
       if(B.blocks==='all') blocked=true;
       else if(B.blocks==='vehicles'){
         if(b.fort){                                // 現成防線：只有裝甲車輾得過（照食30），其他車照擋
-          if(S.crush) v.hp-=B.vehDmg; else blocked=true;
+          if(S.crush){
+            if(G.t-(b.vhitT??-9)>0.35){ b.vhitT=G.t; v.hp-=B.vehDmg; }   // 同磚陣一樣 0.35 秒一次，唔可以每幀扣
+          } else blocked=true;
         } else {                                     // 普通磚陣：磨損取決於車速——全速一撞即碎，慢車只能慢慢刮
           if(G.t-(b.vhitT??-9)>0.35 && Math.abs(v.sp)>8){
             b.vhitT=G.t;
             b.hp -= Math.abs(v.sp)*2;                // 對磚陣嘅磨損＝車速 ×2
-            v.hp -= Math.abs(v.sp)*1.25;             // 車身損傷＝車速 ×1.255
+            v.hp -= Math.abs(v.sp)*1.25;             // 車身損傷＝車速 ×1.25
           }
           if(b.hp>0) blocked=true;                   // 未磨爛之前照樣擋車
         }
@@ -1369,7 +1369,7 @@ const BUILDABLE = ['brick','fire','bin','catapult'];
 const OWN_CAP   = { brick:3, fire:2, bin:1 };   // 每名工兵同時上限：磚陣 3、燃燒的雜物 2、垃圾桶 1
 const SIDE_CAP  = 15;                        // 同陣營工兵路障（磚陣＋燃燒的雜物）合共上限
 const BUILD_CD  = 10;                        // 工兵起完一件要等 10 秒
-const GAP       = 90;                        // 路障之間最少距離
+const GAP       = CFG.BARR_GAP;              // 路障之間最少距離（單一來源：CFG.BARR_GAP）
 
 function countBarr(side,kind){ let n=0; for(const b of G.barr) if(!b.fort&&b.side===side&&b.kind===kind)n++; return n; }
 function countOwn(u,kind){ let n=0; for(const b of G.barr) if(b.owner===u.id&&b.kind===kind)n++; return n; }
@@ -2297,7 +2297,8 @@ TR_PAIRS=[
 ['AI 工兵一走近催淚煙會自動蓋上雪糕筒；<b>你的工兵則按 C 手動撲滅最近一枚</b>（範圍 150）。滅完的雪糕筒會留在地上 5 秒才消失，走過便知道此處剛落過彈。','AI engineers cap tear gas with a cone automatically as they near it; <b>your engineer snuffs the nearest round by pressing C</b> (range 150). Spent cones linger 5 s so you can read where rounds just landed.'],
 ['撞擊傷害＝車速 × ','Ram damage = speed × '],
 ['，只會撞傷敵方——司機同陣營的人不會被自己人輾過。與建築物或路障碰撞不會令載具受損，但<b>載具與載具相撞雙方皆會受損</b>（傷害隨車速）。',". Only enemies get hit — the driver's own side is never run over. Hitting buildings or barricades doesn't hurt the vehicle, but <b>vehicle-on-vehicle collisions damage both</b> (scaling with speed)."],
-['輾磚陣同樣按車速磨損對方、自身每次承受車速 ×1.25 的傷害；理大的現成防線只有它輾得過。司機可以是持盾警察，但車頂探頭位必須由持槍防暴警察擔任，滿員才會開動。車頂可探身開槍（居高臨下，射程 +10%），攻擊打在車上只會損耗車體；車輛被毀時全員陣亡。其他載具的乘員一律無法向外攻擊。警察玩家一登上裝甲車，最近的 AI 持槍警便會趕來補上車頂位，其他 AI 不會與玩家爭車。','Crushing brick lines wears them by speed while the hull takes speed ×1.25 per hit; only this vehicle can crush the ready-made PolyU line. The driver may be a shield officer, but the roof hatch must be a riot gunner — it only moves fully crewed. The roof seat fires over the top (+10% range from height); hits on the vehicle only drain the hull. If it is destroyed, everyone inside dies. Occupants of all other vehicles cannot attack outward. The moment a police player boards, the nearest AI riot gunner runs over to man the roof — no other AI will compete for the vehicle.'],
+['撞普通磚陣與其他載具一樣：按車速磨損磚陣，車身每次承受車速 ×1.25 的損傷。理大的現成防線只有它輾得過——防線不會損毀，車身每輾一下固定承受 ','Ramming an ordinary brick line works as it does for any vehicle: wear scales with speed, and each hit costs the hull speed ×1.25. Only this vehicle can crush the ready-made PolyU line — the line itself takes no damage, but every pass costs the hull a flat '],
+[' 傷害。司機可以是持盾警察，但車頂探頭位必須由持槍防暴警察擔任，滿員才會開動。車頂可探身開槍（居高臨下，射程 +10%），攻擊打在車上只會損耗車體；車輛被毀時全員陣亡。其他載具的乘員一律無法向外攻擊。警察玩家一登上裝甲車，最近的 AI 持槍警便會趕來補上車頂位，其他 AI 不會與玩家爭車。',' damage. The driver may be a shield officer, but the roof hatch must be a riot gunner — it only moves fully crewed. The roof seat fires over the top (+10% range from height); hits on the vehicle only drain the hull. If it is destroyed, everyone inside dies. Occupants of all other vehicles cannot attack outward. The moment a police player boards, the nearest AI riot gunner runs over to man the roof — no other AI will compete for the vehicle.'],
 ['撞磚陣會按車速把它磨損，車身每次碰撞承受車速 ×1.25 的損傷。AI 司機一人即可開車衝擊敵人；沒有目標時會駛向佔領點，到達點邊全員下車加入戰鬥。','Ramming a brick line wears it by speed; the hull takes speed ×1.25 per hit. One AI driver is enough to charge — with no target it drives to the capture point and the crew piles out at the edge.'],
 [' 的士與警車任何一方皆可登上；<b>裝甲車只限警方使用</b>。AI 只會順路登上非常接近的空車，也不會登上其他 AI 正在駕駛的的士或警車。車輛被毀後化為永久路障。',' Taxis and patrol cars can be boarded by either side; <b>the armoured vehicle is police-only</b>. AI only hops into empty vehicles right beside them, and never joins a taxi or patrol car another AI is driving. Destroyed vehicles become permanent wreckage.'],
 ['踏入者每秒承受 ','Anyone standing in it takes '],
@@ -2739,8 +2740,8 @@ function applyLang(){
   setCxNote();
   const note=document.querySelector?document.querySelector('.note'):null;
   if(note) note.innerHTML = E
-    ? '<span class="keys"><b>WASD</b> move　<b>Mouse</b> aim　<b>Left Click</b> primary　<b>Right Click</b> secondary　<b>E</b> build / dismantle / rope down　<b>1–4</b> pick buildable　<b>V</b> spray / wash　<b>R</b> reload　<b>F</b> vehicle / catapult　<b>C</b> cone (snuff gas)　<b>H</b> codex　<b>M</b> map　<b>Tab</b> scoreboard</span><br>You control one unit; everyone else is AI. Protesters move faster than police across the board; every AI pushes hard to take or hold the capture point.<br>Damage drains in order: <b>shield → vest → helmet → HP</b>.'
-    : '<span class="keys"><b>WASD</b> 移動　<b>滑鼠</b> 瞄準　<b>左鍵</b> 主武器　<b>右鍵</b> 副武器　<b>E</b> 建造／拆除／遊繩　<b>1–4</b> 選建造物　<b>V</b> 噴漆／清洗　<b>R</b> 裝填　<b>F</b> 上落車／投石機　<b>C</b> 雪糕筒　<b>H</b> 圖鑑　<b>M</b> 地圖　<b>Tab</b> 記分板</span><br>你操控一名單位，其餘全部由 AI 控制；抗爭者的移動速度全面高於警察；所有 AI 全力進攻或防守佔領點。<br>傷害依次消耗：<b>盾牌 → 防彈衣 → 頭盔 → 生命值</b>。';
+    ? '<span class="keys"><b>WASD</b> move　<b>Mouse</b> aim　<b>Left Click</b> primary　<b>Right Click</b> secondary　<b>E</b> build / dismantle / rope down　<b>1–4</b> pick buildable　<b>V</b> spray / wash　<b>R</b> reload　<b>F</b> vehicle / catapult　<b>C</b> cone (snuff gas)　<b>H</b> codex　<b>M</b> map　<b>Tab</b> scoreboard</span><br>You control one unit; everyone else is AI. Protesters move faster than police across the board; every AI pushes hard to take or hold the capture point.<br>Damage drains in order: <b>shield → vest → helmet → HP</b>.<br>Gang-up penalty: once two different protesters hit the same officer within 10 s, every hit from the second on lands for +50%.'
+    : '<span class="keys"><b>WASD</b> 移動　<b>滑鼠</b> 瞄準　<b>左鍵</b> 主武器　<b>右鍵</b> 副武器　<b>E</b> 建造／拆除／遊繩　<b>1–4</b> 選建造物　<b>V</b> 噴漆／清洗　<b>R</b> 裝填　<b>F</b> 上落車／投石機　<b>C</b> 雪糕筒　<b>H</b> 圖鑑　<b>M</b> 地圖　<b>Tab</b> 記分板</span><br>你操控一名單位，其餘全部由 AI 控制；抗爭者的移動速度全面高於警察；所有 AI 全力進攻或防守佔領點。<br>傷害依次消耗：<b>盾牌 → 防彈衣 → 頭盔 → 生命值</b>。<br>圍毆懲罰：同一名警察在 10 秒內被兩名不同抗爭者攻擊，第二下起承受 +50% 傷害。';
   paintMenu();
 }
 document.getElementById('langBtn').onclick=()=>{ LANG = LANG==='en'?'zh':'en'; applyLang(); };
@@ -4362,7 +4363,7 @@ function start(){
   });
 
   const roster=[];
-  const PolN = G.map.polN || CFG.POLICE_N;                              // 圖級覆蓋（理大、添馬 6+5）
+  const PolN = G.map.polN || CFG.POLICE_N;                              // 圖級覆蓋（理大、添馬 6+6）
   for(const k in PolN) for(let i=0;i<PolN[k];i++) roster.push(k);
   const per = G.map.protPer;                                            // 圖級覆蓋（現時無地圖使用，保留機制）
   const PN = per ? {archer:per,mage:per,slinger:per,infantry:per,engineer:per}
@@ -4710,7 +4711,7 @@ function codexData(){
          armour:'第二座位風景最好；保險公司言明不予承保。'}[k],
       d:`${v.seats} 座 · 耐久 ${v.hp} · 極速 ${Math.round(v.top)}`,
       t:`撞擊傷害＝車速 × ${v.mul}，只會撞傷敵方——司機同陣營的人不會被自己人輾過。與建築物或路障碰撞不會令載具受損，但<b>載具與載具相撞雙方皆會受損</b>（傷害隨車速）。`+
-        (v.crush?'輾磚陣同樣按車速磨損對方、自身每次承受車速 ×1.25 的傷害；理大的現成防線只有它輾得過。司機可以是持盾警察，但車頂探頭位必須由持槍防暴警察擔任，滿員才會開動。車頂可探身開槍（居高臨下，射程 +10%），攻擊打在車上只會損耗車體；車輛被毀時全員陣亡。其他載具的乘員一律無法向外攻擊。警察玩家一登上裝甲車，最近的 AI 持槍警便會趕來補上車頂位，其他 AI 不會與玩家爭車。'
+        (v.crush?`撞普通磚陣與其他載具一樣：按車速磨損磚陣，車身每次承受車速 ×1.25 的損傷。理大的現成防線只有它輾得過——防線不會損毀，車身每輾一下固定承受 ${B.brick.vehDmg} 傷害。司機可以是持盾警察，但車頂探頭位必須由持槍防暴警察擔任，滿員才會開動。車頂可探身開槍（居高臨下，射程 +10%），攻擊打在車上只會損耗車體；車輛被毀時全員陣亡。其他載具的乘員一律無法向外攻擊。警察玩家一登上裝甲車，最近的 AI 持槍警便會趕來補上車頂位，其他 AI 不會與玩家爭車。`
                 :'撞磚陣會按車速把它磨損，車身每次碰撞承受車速 ×1.25 的損傷。AI 司機一人即可開車衝擊敵人；沒有目標時會駛向佔領點，到達點邊全員下車加入戰鬥。')+
         ' 的士與警車任何一方皆可登上；<b>裝甲車只限警方使用</b>。AI 只會順路登上非常接近的空車，也不會登上其他 AI 正在駕駛的的士或警車。車輛被毀後化為永久路障。'+
         `${DATA}座位 ${v.seats} · 耐久 ${v.hp} · 加速 ${Math.round(v.accel)} · 極速 ${Math.round(v.top)}（倒車 45%）· 撞擊倍率 ×${v.mul} · 車身 ${v.w}×${v.h}`})),
